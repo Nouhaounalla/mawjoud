@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+/*
+  Mawjoud brand colors, taken from the logo.
+  Tailwind turns each of these into classes, for example:
+  bg-brand-600, text-brand-900, border-brand-200, hover:bg-brand-700
+*/
+@theme {
+  --color-brand-50: #effaf4;   /* very light mint (page background) */
+  --color-brand-100: #d9f2e4;
+  --color-brand-200: #b3e5c9;
+  --color-brand-400: #35ad76;  /* light green (the arcs around the logo) */
+  --color-brand-600: #0a8a5b;  /* main green (the pin and the cross) */
+  --color-brand-700: #06704a;
+  --color-brand-900: #004032;  /* dark green (the "Mawjoud" text) */
+}
+
+body {
+  background-color: var(--color-brand-50);
+  color: var(--color-brand-900);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+/* ---- Map markers (used by src/components/PharmacyMap.js) ---- */
+
+/* A pin shape: a square with one sharp corner, rotated so it points down. */
+.map-pin {
+  width: 32px;
+  height: 32px;
+  background: var(--color-brand-600);
+  border: 2px solid #ffffff;
+  border-radius: 50% 50% 50% 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  transform: rotate(-45deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Amber pin when the stock is low */
+.map-pin--low {
+  background: #d99a00;
+}
+
+/* The "+" inside the pin is rotated back so it stays upright */
+.map-pin > span {
+  transform: rotate(45deg);
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+}
