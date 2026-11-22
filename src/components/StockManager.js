@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import AddMedication from "@/components/AddMedication";
 import StatusBadge from "@/components/StatusBadge";
 import StatusButtons from "@/components/StatusButtons";
 import { timeAgo } from "@/lib/geo";
@@ -9,33 +10,15 @@ import { useMedicationSearch } from "@/lib/useMedicationSearch";
 
 // The screen a logged-in pharmacist uses to update stock.
 //   user: the logged-in Supabase user (we only display the e-mail)
-export default function StockManager({ user }) {
+//   pharmacy: the pharmacy of this user { id, name, address, verified }
+export default function StockManager({ user, pharmacy }) {
   const search = useMedicationSearch();
 
-  const [pharmacies, setPharmacies] = useState([]);
-  const [pharmacyId, setPharmacyId] = useState(""); // chosen pharmacy
+  const pharmacyId = String(pharmacy.id); // a pharmacist only manages their own pharmacy
   const [stockRows, setStockRows] = useState([]); // current stock of that pharmacy
   const [selectedMed, setSelectedMed] = useState(null); // medicine being edited
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
-
-  // Load the list of pharmacies once.
-  useEffect(() => {
-    async function loadPharmacies() {
-      const { data, error } = await supabase
-        .from("pharmacies")
-        .select("id, name, address")
-        .order("name");
-
-      if (error) {
-        setMessage({ type: "error", text: "Impossible de charger les pharmacies." });
-        return;
-      }
-      setPharmacies(data);
-      if (data.length > 0) setPharmacyId(String(data[0].id));
-    }
-    loadPharmacies();
-  }, []);
 
   // Load the stock of the chosen pharmacy (called again after each update).
   const loadStock = useCallback(async () => {
@@ -114,22 +97,16 @@ export default function StockManager({ user }) {
         </button>
       </div>
 
-      {/* ---------- 1. Choose the pharmacy ---------- */}
+      {/* ---------- 1. Your pharmacy ---------- */}
       <section className="rounded-2xl border border-brand-200 bg-white p-4 shadow-sm">
-        <label className="block text-sm font-semibold">
-          1. Votre pharmacie
-          <select
-            value={pharmacyId}
-            onChange={(event) => setPharmacyId(event.target.value)}
-            className="mt-1 w-full rounded-lg border border-brand-200 bg-white px-3 py-2.5 font-normal outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-200"
-          >
-            {pharmacies.map((pharmacy) => (
-              <option key={pharmacy.id} value={pharmacy.id}>
-                {pharmacy.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <p className="text-sm font-semibold">Votre pharmacie</p>
+        <p className="mt-1 text-lg font-bold">{pharmacy.name}</p>
+        {pharmacy.address && <p className="text-sm text-brand-900/70">{pharmacy.address}</p>}
+        {!pharmacy.verified && (
+          <p className="mt-3 rounded-lg bg-amber-100 px-3 py-2 text-sm text-amber-900">
+            En attente de vérification : votre pharmacie n&apos;est pas encore visible des patients.
+          </p>
+        )}
       </section>
 
       {/* ---------- 2. Pick a medicine and set its status ---------- */}
@@ -181,7 +158,7 @@ export default function StockManager({ user }) {
             </p>
             <StatusButtons
               current={currentStatus}
-              disabled={saving || !pharmacyId}
+              disabled={saving}
               onChange={(status) => updateStatus(selectedMed.id, status)}
             />
           </div>
@@ -197,6 +174,13 @@ export default function StockManager({ user }) {
           </p>
         )}
       </section>
+
+      <AddMedication
+        onAdded={(med) => {
+          search.pick(med);
+          setSelectedMed(med);
+        }}
+      />
 
       {/* ---------- 3. Current stock of this pharmacy ---------- */}
       <section>
